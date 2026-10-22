@@ -67,3 +67,42 @@ h1 span{color:#68bded}.intro p{margin:0;line-height:1.7;font-size:15px;color:#9a
 @media(max-width:700px){.topbar-inner,.layout{padding-left:16px;padding-right:16px}.topbar-inner{min-height:70px}.top-info{font-size:11px}.read-only{display:none}.intro{padding:37px 0 25px}.intro p{font-size:13px}.avatar-button{height:128px;width:128px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:34px;gap:10px}.stats>div{padding:13px 15px}.stats strong{font-size:24px}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.filters .search{grid-column:1/-1}.catalog{grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:19px 10px}.tile-title{font-size:12px}.popup-content{flex-direction:column}.popup-poster{width:110px}.popup dl{grid-template-columns:95px 1fr}}
 @media(max-width:400px){.identity small{font-size:8px}.top-info{font-size:10px}.intro{gap:12px}.avatar-button{height:97px;width:97px}.filters{grid-template-columns:1fr}.sort-status{font-size:12px}.tile-details{font-size:11px}.as-list .tile-info{flex-direction:column;align-items:start;gap:1px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.poster img{transition:none}}
+
+/* Joos71 6.0: dashboard gatunków i oceny */
+.site-tabs{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0 18px}
+.site-tab{display:inline-block;padding:12px 20px;text-decoration:none;color:#e7ecf3;background:#182236;border:1px solid #35455e;border-radius:12px;font-weight:700}
+.site-tab:hover,.site-tab:focus-visible{background:#263f62;border-color:#6ab0ff}
+.genre-dashboard{background:rgba(16,23,35,.86);border:1px solid #304157;border-radius:20px;padding:24px;margin-bottom:30px;scroll-margin-top:95px}
+#biblioteka{scroll-margin-top:95px}.genre-controls{display:flex;gap:18px;flex-wrap:wrap;margin:18px 0}
+.genre-controls label{display:flex;flex-direction:column;gap:8px;color:#aab7c9;font-size:12px;letter-spacing:1px;flex:1;min-width:165px}
+.genre-controls select{width:100%;background:#182337;color:#f0f3fb;border:1px solid #425372;border-radius:10px;padding:12px;font-size:14px}
+.genre-chart-frame{position:relative;min-height:270px;background:linear-gradient(155deg,#111b2c,#1b263a);border:1px solid #30415e;border-radius:16px;padding:16px}
+.genre-chart{width:100%}.genre-chart>svg{width:100%;height:auto;max-height:960px;display:block}.genre-svg-item{cursor:pointer;transition:opacity .2s}.genre-svg-item:hover,.genre-svg-item:focus{opacity:.75;outline:none}
+.genre-tooltip{position:absolute;pointer-events:none;z-index:4;max-width:230px;white-space:pre-line;background:#080e19;border:1px solid #75a8e3;border-radius:9px;color:#f5f6f8;padding:10px 12px;line-height:1.6;box-shadow:0 8px 24px #0009;font-size:12px}
+.genre-note{color:#a9b6ca;font-size:13px;line-height:1.65;margin-top:14px}.genre-legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;margin-top:9px}
+.genre-legend button{border:1px solid #334763;border-radius:8px;background:#152237;text-align:left;padding:10px;color:#e9eef8;cursor:pointer}.genre-legend button i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:8px}
+.tile-score.score-community{color:#60bafa}.tile-score.score-critic{color:#f4bc59}
+.mods-links{margin-top:18px;padding-top:15px;border-top:1px solid #354258;display:flex;flex-wrap:wrap;gap:9px}.mods-links h4{width:100%;margin:0;color:#e7e9ee}.mods-links a{display:inline-block;color:#91caff;background:#162a44;border:1px solid #3b597a;padding:7px 10px;border-radius:8px;text-decoration:none;font-size:13px}.mods-links a:hover{background:#24456e}.mods-links p{font-size:12px;line-height:1.5;opacity:.8;width:100%}
+@media(max-width:640px){.genre-dashboard{padding:12px}.genre-chart-frame{padding:6px}.genre-controls{gap:8px}.genre-svg-item text{font-size:13px}}
+
+/* Joos71 6.1: sprawdzone linki Nexus/GG.deals i filtr */
+.tile-mod-mark{color:#96dfad;font-weight:800;font-size:10px;letter-spacing:.05em}
+.mods-links a.direct-link{background:#183b36;border-color:#387c6d;color:#b3f0d5}
+.mods-links a.direct-link:hover{background:#235548}
+.mods-links p.mods-confirmed{font-size:12px;color:#a4e0bf;font-weight:700;opacity:1;margin:10px 0 0}
+.mods-links p.mods-muted{font-size:12px;color:#a6b8cc;opacity:1;margin:11px 0 1px}
+.filter-status label{user-select:none}
+
+/* Joos71 6.1 — okna szczegółów nie przewijają katalogu pod spodem. */
+body.dialog-scroll-locked{
+  position:fixed;
+  top:var(--dialog-scroll-offset,0px);
+  left:0;
+  right:0;
+  width:100%;
+  padding-right:var(--dialog-scrollbar-width,0px);
+}
+.popup{
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}

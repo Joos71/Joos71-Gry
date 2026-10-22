@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Joos71 — katalog gier z Playnite. Okładki, oceny i czas gry.">
+  <title>Joos71 — Moja kolekcja Playnite</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar" id="start">
+    <div class="topbar-inner">
+      <div class="identity"><div class="identity-symbol">J</div><div><strong>JOOS71</strong><small>MOJA BIBLIOTEKA GIER</small></div></div>
+      <div class="top-info"><span class="read-only">TYLKO DO PRZEGLĄDANIA</span><span id="stamp">Ostatni eksport: —</span></div>
+    </div>
+  </header>
+  <main class="layout">
+    <section class="intro">
+      <div class="intro-copy"><div class="intro-kicker">KOLEKCJA GIER / PLAYNITE</div><h1>Moje gry.<br><span>Moje historie.</span></h1><p>Gry zebrane w jednym miejscu — z okładkami, czasem rozgrywki i ocenami. Jedna biblioteka, wiele platform.</p></div>
+      <button class="avatar-button" id="avatar-open" aria-label="Powiększ awatar Joos71"><img src="avatar.webp" alt="Awatar Joos71"></button>
+    </section>
+    <section class="stats" aria-label="Statystyki kolekcji">
+      <div><small>GRY I WYDANIA</small><strong id="total-games">—</strong></div>
+      <div><small>ŁĄCZNY CZAS GRY</small><strong id="total-hours">—</strong></div>
+      <div><small>OGRANE POZYCJE</small><strong id="played-games">—</strong></div>
+      <div><small>SCALONE WPISY</small><strong id="merged-games">—</strong></div>
+    </section>
+    <nav class="site-tabs" aria-label="Działy strony"><a href="#biblioteka" class="site-tab">Biblioteka</a><a href="#gatunki" class="site-tab">Gatunki i statystyki</a></nav>
+    <section class="genre-dashboard" id="gatunki" aria-labelledby="genre-heading">
+      <div class="library-head"><div class="library-title"><h2 id="genre-heading">Gatunki i statystyki</h2><p>Liczba gier i rozkład czasu rozgrywki — bez podziału na lata</p></div></div>
+      <div class="genre-controls">
+        <label><span>MIARA STATYSTYK</span><select id="genre-measure"><option value="count">Liczba gier</option><option value="hours">Czas gry (godziny)</option></select></label>
+        <label><span>RODZAJ WYKRESU</span><select id="genre-chart-type"><option value="bar">Słupkowy</option><option value="pie">Kołowy</option></select></label>
+        <label><span>ILE GATUNKÓW</span><select id="genre-limit"><option value="10">TOP 10</option><option value="20">TOP 20</option><option value="all">Wszystkie</option></select></label>
+      </div>
+      <div class="genre-chart-frame"><div id="genre-chart" class="genre-chart" role="img" aria-label="Wykres liczby gier według gatunku"></div><div id="genre-tooltip" class="genre-tooltip" hidden></div></div>
+      <p class="genre-note">Gra przypisana do kilku gatunków występuje w każdym z nich. Procenty odnoszą się do sumy prezentowanych przypisań, a nie do liczby unikatowych gier. Wybierz gatunek, aby odfiltrować katalog.</p>
+    </section>
+    <section class="library" id="biblioteka" aria-label="Biblioteka gier">
+      <div class="library-head">
+        <div class="library-title"><h2>Biblioteka gier</h2><p>Moja kolekcja Playnite</p></div>
+        <div class="sort-status" id="sort-status" role="status" aria-live="polite">CZAS GRY ↓ NAJWIĘCEJ</div>
+        <div class="view-switch"><button id="grid-mode" type="button" class="is-active" aria-label="Widok okładek" aria-pressed="true">▦</button><button id="list-mode" type="button" aria-label="Widok listy" aria-pressed="false">☰</button></div>
+      </div>
+      <div class="filters">
+        <label class="search"><span>WYSZUKAJ GRĘ</span><input id="search" type="search" placeholder="Wpisz tytuł…" autocomplete="off"></label>
+        <label><span>SORTOWANIE</span><select id="sort"><option value="time-desc">Czas gry — najwięcej</option><option value="time-asc">Czas gry — najmniej</option><option value="score-desc">Ocena — najwyższa</option><option value="community-desc">Ocena graczy — najwyższa</option><option value="critic-desc">Ocena krytyków — najwyższa</option><option value="name-asc">Nazwa — A–Z</option><option value="name-desc">Nazwa — Z–A</option><option value="year-desc">Rok — najnowsze</option><option value="year-asc">Rok — najstarsze</option></select></label>
+        <label><span>BIBLIOTEKA</span><select id="library"><option value="">Wszystkie</option></select></label>
+        <label><span>GATUNEK</span><select id="genre"><option value="">Wszystkie</option></select></label>
+        <label><span>PLATFORMA</span><select id="platform"><option value="">Wszystkie</option></select></label>
+      </div>
+      <div class="filter-footer"><div class="filter-status"><span id="count">Wczytywanie…</span><label><input type="checkbox" id="played"> Tylko ograne</label><label><input type="checkbox" id="nexus-only"> Tylko gry z Nexus Mods</label></div><button type="button" id="clear">Wyczyść filtry ↺</button></div>
+      <div class="catalog" id="catalog" aria-live="off"></div>
+      <div class="load-marker" id="load-marker" aria-hidden="true"></div>
+    </section>
+  </main>
+  <button id="go-top" class="go-top" type="button" aria-label="Wróć na górę strony">↑</button>
+  <dialog id="game-dialog" class="popup"><button class="popup-close" id="game-close" type="button" aria-label="Zamknij">✕</button><div id="game-body"></div></dialog>
+  <dialog id="avatar-dialog" class="popup avatar-popup"><button class="popup-close" id="avatar-close" type="button" aria-label="Zamknij">✕</button><img src="avatar.webp" alt="Awatar Joos71 w powiększeniu"></dialog>
+  <script src="data.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
