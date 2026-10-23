@@ -27,10 +27,19 @@ HTML = re.compile(r"<[^>]*>")
 # Tylko odmiany wydania gry, nie inne gry/remaki ani kontynuacje.
 EDITION = re.compile(
     r"(?:\s*[-–:]\s*|\s+)(?:standard edition|digital deluxe edition|n7 digital deluxe edition|"
-    r"deluxe edition|digital deluxe|definitive edition|ultimate edition|complete edition|"
+    r"deluxe edition|digital deluxe|ultimate edition|complete edition|"
     r"collector(?:'|’)?s edition|game of the year edition|goty edition|windows edition)\s*$", re.I
 )
 SUFFIX = re.compile(r"(?:\s*\(\s*(?:standard edition|deluxe edition|digital deluxe edition|windows edition)\s*\)\s*)$", re.I)
+# Polskie nazwy wariantów wykorzystywane np. przez Origin / EA App.
+# Scalać można je wyłącznie z istniejącą grą podstawową O IDENTYCZNYM, dodatnim czasie.
+# Nie traktujemy dowolnego DLC lub remastera jako tego samego tytułu.
+POLISH_EDITION = re.compile(
+    r"^(?P<base>.+?)(?:\s*[-–—:]\s*|\s+)(?:"
+    r"ulepszenie\s+deluxe|cyfrowa\s+edycja\s+deluxe(?:\s+n7)?|"
+    r"edycja\s+deluxe(?:\s+n7)?|digital\s+deluxe\s+n7"
+    r")\s*(?:\(\s*\d{4}\s*\))?\s*$", re.I
+)
 URL_LINK = re.compile(r'<a\b[^>]*\bhref\s*=\s*["\']([^"\']+)["\'][^>]*>(.*?)</a>', re.I | re.S)
 IMG = re.compile(r"^[0-9a-f-]{36}/[0-9a-f-]{36}\.(?:jpg|jpeg|png|webp)$", re.I)
 
@@ -77,6 +86,34 @@ def norm(raw: str) -> str:
     return re.sub(r"[^\w]+", "", raw, flags=re.U)
 
 
+# Wariant ogólny: nie istnieją listy wyjątków dla poszczególnych gier.
+# Adres Nexus Mods musi pochodzić z rzeczywistego odnośnika w Playnite
+# lub z poprzednio zweryfikowanego adresu tego samego rekordu katalogu.
+# Nigdy nie wyliczamy identyfikatora gry Nexus z samego tytułu.
+
+
+def canonical_game_nexus(url: str) -> str:
+    """Ujednolica znany URL strony gry w Nexus Mods (bez zgadywania sluga)."""
+    try:
+        parts = urlsplit(url.strip())
+        if (parts.scheme != 'https' or (parts.hostname or '').lower() not in
+                ('nexusmods.com', 'www.nexusmods.com') or parts.username or
+                parts.password or parts.port not in (None, 443)):
+            return ''
+        path = parts.path.strip('/')
+        chunks = path.split('/')
+        if len(chunks) == 1 and re.fullmatch(r'[a-zA-Z0-9_-]+', chunks[0]):
+            slug = chunks[0]
+        elif (len(chunks) == 2 and chunks[0].lower() == 'games' and
+              re.fullmatch(r'[a-zA-Z0-9_-]+', chunks[1])):
+            slug = chunks[1]
+        else:
+            return ''
+        return 'https://www.nexusmods.com/games/' + slug
+    except (ValueError, AttributeError):
+        return ''
+
+
 def verified_links(raw: str) -> dict[str, str]:
     """Tylko rzeczywiste linki z pola Linki Playnite; dozwolone hosty i HTTPS."""
     found: dict[str, str] = {}
@@ -92,12 +129,9 @@ def verified_links(raw: str) -> dict[str, str]:
             continue
         if label == 'nexus mods' and host in ('nexusmods.com', 'www.nexusmods.com'):
             # Nexus Mods checker daje adres gry, np. /qube2 lub /games/starfield.
-            path = parts.path.strip('/')
-            chunks = path.split('/')
-            if (len(chunks) == 1 and re.fullmatch(r'[a-zA-Z0-9_-]+', path)) or (
-                len(chunks) == 2 and chunks[0] == 'games' and re.fullmatch(r'[a-zA-Z0-9_-]+', chunks[1])
-            ):
-                found.setdefault('nexus', 'https://www.nexusmods.com/' + path)
+            url = canonical_game_nexus(href)
+            if url:
+                found.setdefault('nexus', url)
         elif label == 'gg.deals' and host in ('gg.deals', 'www.gg.deals'):
             # Nie przyjmuj pozornie podobnych domen i ścieżek.
             if re.fullmatch(r'/game/[a-zA-Z0-9_-]+/?', parts.path):
@@ -155,22 +189,24 @@ def parse(path: Path, src: Path) -> dict | None:
     }
 
 
-def key_for(name: str, names: set[str]) -> str:
-    """Identyczny tytuł lub bezpiecznie rozpoznane wydanie tej samej gry.
+def key_for(name: str, names: set[str], play_minutes: int = 0,
+            base_times: dict[str, set[int]] | None = None) -> str:
+    """Ten sam tytuł lub rozpoznane wydanie tej samej gry.
 
-    Nie utożsamiaj automatycznie nowej Mafii (Definitive Edition) ze starym
-    wydaniem — są to różne gry/remastery. Tak samo nie usuwamy z nazw
-    "Remastered", "Remake" ani "Redux".
+    Polskie ulepszenia Deluxe scalamy tylko, jeżeli istnieje bazowa gra
+    z DOKŁADNIE takim samym dodatnim czasem. Inne DLC, remastery,
+    remake'i i samodzielne dodatki muszą pozostać oddzielne.
     """
     exact = norm(name)
-    base = EDITION.sub("", name)
-    base = SUFFIX.sub("", base)
+    polish = POLISH_EDITION.fullmatch(name.strip())
+    if polish:
+        b = norm(polish.group('base'))
+        if b in names and play_minutes > 0 and play_minutes in (base_times or {}).get(b, set()):
+            return b
+        return exact
+    base = SUFFIX.sub('', EDITION.sub('', name)).strip()
     b = norm(base)
     if not b or b == exact or b not in names:
-        return exact
-    # Definitive Edition bywa remakiem/remasterem, a nie edycją tego samego tytułu.
-    # Znane przypadki oryginału i remake'u pozostają osobnymi wpisami.
-    if b in {"mafia", "mafiaii", "mafiaiii"} and re.search(r"definitive edition\s*$", name, re.I):
         return exact
     return b
 
@@ -183,10 +219,13 @@ def merge_records(items: list[dict]) -> tuple[list[dict], int, list[dict]]:
     Czas katalogu = najwyższy czas ze źródeł (nie sumujemy potencjalnie
     zdublowanych pomiarów). Następny eksport liczymy od początku.
     """
-    names = {norm(g["title"]) for g in items}
+    names = {norm(g['title']) for g in items}
+    base_times = defaultdict(set)
+    for game in items:
+        base_times[norm(game['title'])].add(game['minutes'])
     buckets = defaultdict(list)
     for game in items:
-        buckets[key_for(game["title"], names)].append(game)
+        buckets[key_for(game['title'], names, game['minutes'], base_times)].append(game)
 
     output = []
     report = []
@@ -213,6 +252,8 @@ def merge_records(items: list[dict]) -> tuple[list[dict], int, list[dict]]:
         for platform_game in group:
             for kind, url in platform_game.get("links", {}).items():
                 links.setdefault(kind, url)
+        # Zachowujemy wyłącznie udokumentowane linki z połączonych rekordów.
+        # Nie tworzymy wyjątków dla nazw konkretnych gier.
         merged = {
             "id": main["id"], "title": main["title"], "minutes": best["minutes"],
             "libraries": fields["libraries"], "platforms": fields["platforms"],
@@ -277,6 +318,16 @@ def build(source: Path, dest: Path, template: Path):
                 for game in previous.get("games", []):
                     old_by_id[game["id"]] = game
                     old_by_title[norm(game["title"])] = game
+        # Ogólna reguła trwałości odnośników: jeśli nowy eksport chwilowo
+        # nie zawiera linku Nexus dla TEGO SAMEGO rekordu, przywróć poprzednio
+        # zapisany, sprawdzony URL. Remastery i inne wersje NIE przejmują
+        # automatycznie linków bazowej gry (mogą mieć inne mody).
+        for game in unique:
+            old_game = old_by_id.get(game["id"]) or old_by_title.get(norm(game["title"]))
+            if old_game and not game["links"].get("nexus"):
+                previous = canonical_game_nexus(old_game.get("links", {}).get("nexus", ""))
+                if previous:
+                    game["links"]["nexus"] = previous
         for g in unique:
             pic = g.pop("cover_source")
             if pic:
@@ -303,7 +354,7 @@ def build(source: Path, dest: Path, template: Path):
         # Source export date, not time the user opens the page.
         latest = datetime.fromtimestamp(max_mtime).strftime("%d.%m.%Y, %H:%M")
         data = {"exported": latest, "sourceCount": len(raw), "uniqueCount": len(unique), "mergedCount": merged_count,
-                "mergeRule": "same-title-and-recognized-editions-no-time-condition", "games": unique}
+                "mergeRule": "same-title-and-recognized-editions-PL-deluxe-same-time", "games": unique}
         (stage / "data.js").write_text("window.JOOS71_CATALOG = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n", encoding="utf-8")
         for name in ("index.html", "main.js", "style.css", "avatar.webp"):
             shutil.copyfile(template / name, stage / name)
@@ -325,7 +376,7 @@ def build(source: Path, dest: Path, template: Path):
         if backup and backup.exists():
             shutil.rmtree(backup)
         reportpath = dest.parent / "RAPORT_SCALANIA.txt"
-        lines = ["Joos71 6.0 — raport automatycznych połączeń", "Reguła: to samo wydanie lub ta sama gra na roznych platformach niezależnie od czasu gry. Czas katalogowy to największy czas z połączonych wpisów.", "Liczba rekordów źródłowych: " + str(len(raw)), "Liczba pozycji w katalogu: " + str(len(unique)), "Połączone dodatkowe rekordy: " + str(merged_count), ""]
+        lines = ["Joos71 6.2 — raport automatycznych połączeń", "Reguła: ten sam tytuł lub rozpoznane wydania, przy czym polskie Deluxe wymagają identycznego dodatniego czasu. Czas katalogowy to największy czas z połączonych wpisów.", "Liczba rekordów źródłowych: " + str(len(raw)), "Liczba pozycji w katalogu: " + str(len(unique)), "Połączone dodatkowe rekordy: " + str(merged_count), ""]
         for r in report:
             lines.append("* " + r["title"] + " — " + str(r["minutes"]) + " min")
             lines.extend("  - " + n + " [" + str(m) + " min]" for n, m in r["variants"])

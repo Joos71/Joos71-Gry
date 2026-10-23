@@ -230,9 +230,9 @@
     if (nexus) {
       const caption = document.createElement('p');
       caption.className = 'mods-confirmed';
-      caption.textContent = 'Nexus Mods — link zapisany w Playnite';
+      caption.textContent = 'Nexus Mods — potwierdzona strona gry';
       mods.appendChild(caption);
-      // Odnośnik /slug lub /games/slug pochodzi z eksportu, nie zgadujemy nazw gier.
+      // Adres pochodzi z Playnite lub z wcześniej zapisanego linku tego samego wpisu.
       const parts = new URL(nexus).pathname.split('/').filter(Boolean);
       const slug = parts[parts.length - 1];
       addLink('Nexus Mods — strona gry', nexus, true);
@@ -244,8 +244,10 @@
     } else {
       const missing = document.createElement('p');
       missing.className = 'mods-muted';
-      missing.textContent = 'Brak potwierdzonego odnośnika Nexus Mods w eksporcie Playnite.';
+      missing.textContent = 'Brak bezpośredniego odnośnika Nexus Mods w metadanych.';
       mods.appendChild(missing);
+      addLink('Nexus Mods — wyszukaj grę',
+        'https://www.google.com/search?q=' + encodeURIComponent('site:nexusmods.com/games/ "' + game.title + '"'));
     }
     if (gg) {
       const caption = document.createElement('p');
