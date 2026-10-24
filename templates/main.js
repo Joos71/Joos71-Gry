@@ -320,6 +320,11 @@
 
   const genrePalette = ['#47a6ea','#f8b84d','#89cb70','#ed7596','#ae8fee','#56c5bd','#ed9766','#7aa9ff','#d3c36f','#b382c5','#ea7474','#54ad77','#77d0df','#dca2ef','#b5b9df','#fbcb8a','#8fc5a4','#b69469','#e58cc7','#a7d76a'];
   function setupGenres() {
+    // Uzgodnione ustawienia początkowe sekcji „Gatunki i statystyki”.
+    // Bez zapisywania preferencji — po ponownym otwarciu strony wraca domyślny widok.
+    el('genre-measure').value = 'hours';
+    el('genre-chart-type').value = 'bar';
+    el('genre-limit').value = '10';
     const stats = new Map();
     for (const game of source.games) for (const genre of game.genres || []) {
       if (!genre) continue;
