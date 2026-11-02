@@ -356,7 +356,7 @@ def build(source: Path, dest: Path, template: Path):
         data = {"exported": latest, "sourceCount": len(raw), "uniqueCount": len(unique), "mergedCount": merged_count,
                 "mergeRule": "same-title-and-recognized-editions-PL-deluxe-same-time", "games": unique}
         (stage / "data.js").write_text("window.JOOS71_CATALOG = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n", encoding="utf-8")
-        for name in ("index.html", "main.js", "style.css", "avatar.webp"):
+        for name in ("index.html", "main.js", "style.css", "avatar.webp", "favicon.svg"):
             shutil.copyfile(template / name, stage / name)
         (stage / ".nojekyll").write_text("", encoding="utf-8")
         # Check output before switching directories.
